@@ -236,19 +236,9 @@ bool Server::checkLogin(User &newUser)
         return false;
     }
 
-    userStream.seekg(0, ios::end);
-    int length = userStream.tellg();
-    userStream.seekg(ios::beg);
-
-    char buffer[length];
-    userStream.read(buffer, length);
-    userStream.close();
-
-    string user;
-    user.assign(buffer);
-    istringstream stringBuffer(user);
     User adminUser;
-    adminUser.deSerializedUser(stringBuffer, length);
+    adminUser.deSerializedUser(userStream);
+    userStream.close();
 
     if (!adminUser.equals(newUser))
         return false;

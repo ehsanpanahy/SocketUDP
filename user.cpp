@@ -38,38 +38,23 @@ bool User::equals(const User &other)
 
 void User::serializeUser(ostream &os)
 {
+    User u;
+    u.setUserName(this->userName);
+    u.setHashedPassword(this->hashedPassword);
 
-    string serial;
+    cereal::JSONOutputArchive outAr(os);
+    outAr(u);
 
-    serial.append("[\n\t\"user\":{\n\t\t\"username\": ");
-    serial.append("\"" + this->getUserName() + "\"" + ",\n");
-    serial.append("\t\t\"hashedPassword\": \"" + this->getHashedPassword()+ "\"");
-    serial.append("\n\t}").append("\n]");
-
-    os.write(serial.c_str(), serial.length());
 }
 
-void User::deSerializedUser(istream &is, int length)
+void User::deSerializedUser(istream &is)
 {
-    string sUser;
-    char buffer[length];
-    is.read(buffer, length);
+    cereal::JSONInputArchive isAr(is);
+    User u;
+    isAr(u);
+    this->userName = u.getUserName();
+    this->hashedPassword = u.getHashedPassword();
 
-    sUser.assign(buffer);
-    vector<string> elemnts;
-    std::regex pattern("\"(.*?)\"");
-
-    vector<string> elements;
-    smatch match;
-    while(std::regex_search(sUser, match, pattern))
-    {
-        for (auto x : match)
-            elemnts.push_back(x.str());
-        sUser = match.suffix().str();
-    }
-
-    this->userName = elemnts[5];
-    this->hashedPassword = elemnts[9];
 }
 
 

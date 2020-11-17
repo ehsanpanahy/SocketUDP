@@ -1,0 +1,13 @@
+prefix=/business/Practice/ClientServer_newTest/ClientTest/ClientTest/libcpnet-dev/output
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libcpnet
+Description: Cross-platform Network Wrapper Library
+Version: 1.0.0
+URL: 
+#Requires: @AX_PACKAGE_REQUIRES@
+#Requires.private: @AX_PACKAGE_REQUIRES_PRIVATE@
+Libs: -L${libdir} -lcpnet
+Cflags: -I${includedir}/

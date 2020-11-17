@@ -2,7 +2,7 @@
 #define USER_H
 
 #include <string>
-
+#include <cereal/archives/json.hpp>
 
 using namespace std;
 
@@ -16,8 +16,14 @@ public:
 
     bool equals(const User &other);
 
+    template<class Archive>
+    void serialize(Archive & archive)
+    {
+      archive( userName, hashedPassword );
+    }
+
     void serializeUser(std::ostream &os);
-    void deSerializedUser(std::istream &is, int length);
+    void deSerializedUser(std::istream &is);
 
     void setHashedPassword(const string &value);
     string getUserName() const;
