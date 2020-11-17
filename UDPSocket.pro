@@ -38,13 +38,13 @@ HEADERS += client.h \
            getfilewindow.h \
            loginview.h \
            loginwidget.h \
-           mainwindow.h \
-           mainwinow.h \
+           mainwidnow.h \
            md5.h \
            messageprotocol.h \
            server.h \
            servercpnet.h \
            serverinterface.h \
+           socketexception.h \
            syncinput.h \
            syncoutput.h \
            user.h \
@@ -71,6 +71,7 @@ SOURCES += client.cpp \
            server.cpp \
            servercpnet.cpp \
            serverinterface.cpp \
+    socketexception.cpp \
            syncinput.cpp \
            syncoutput.cpp \
            user.cpp \

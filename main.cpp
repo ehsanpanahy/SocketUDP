@@ -5,11 +5,11 @@
 #include "commons.h"
 #include <string>
 #include <fstream>
-
+#include "socketexception.h"
 #include "commandlineinterface.h"
 
 #include <QApplication>
-#include "mainwinow.h"
+#include "mainwidnow.h"
 
 using namespace std;
 
@@ -26,9 +26,14 @@ int main(int argc, char *argv[])
                                 Commons::UDP_SOCKET, 0);
     Client* client = new Client(addrrss, port, BUFFER_SIZE,
                                 Commons::UDP_SOCKET, 0);
-
-    server->initiate();
-    client->initiate();
+    try {
+        client->initiate();
+        server->initiate();
+    } catch (const SocketException &e) {
+        cout <<"action:" + e.getAction() + "Failed with the message:"
+            <<e.what();
+        exit(EXIT_FAILURE);
+    }
 
     ofstream outLogStream("Server.log");
 

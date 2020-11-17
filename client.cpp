@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include "messageprotocol.h"
+#include <socketexception.h>
 
 using namespace std;
 
@@ -23,10 +24,12 @@ Client::~Client()
     delete input;
 }
 
-bool Client::initiate()
+void Client::initiate()
 {
+    if(!clientInfrastructure->initClient())
+        throw SocketException("Failed initializing client", "initialization");
 
-    return clientInfrastructure->initClient();
+
 }
 
 bool Client::sendMessage(string message)
@@ -78,7 +81,19 @@ string Client::sendCommand(string command, string data[])
         response = this->readMessage().getData()[0];
         if (response.find("sendingFile") != string::npos)
         {
-            response = recieveFile(fileName);
+            try {
+                response = recieveFile(fileName);
+            } catch (const SocketException &e) {
+                output->writeLine("Action:" + e.getAction() +
+                                  "Failed with the message:" +
+                                  e.what());
+                return "Error reciveving file";
+
+            }catch(const runtime_error &e)
+            {
+                output->writeLine(e.what());
+                return "Runtime error!";
+            }
         }
 
     }else if (command.find("logout") != string::npos)
@@ -104,7 +119,9 @@ string Client::recieveFile(string fileName)
     uint16_t bufferSize = clientInfrastructure->getBufferSize();
     string buffer;
 
-    this->clientInfrastructure->readFromServer(buffer);
+    if (!this->clientInfrastructure->readFromServer(buffer))
+        throw SocketException("Failed to recieve file", "read");
+
     if (buffer.find("fileNotFound") != string::npos)
     {
         return "Client>>Bad file request";
@@ -117,7 +134,7 @@ string Client::recieveFile(string fileName)
 
     if (!outStream.good())
     {
-        return "Client>>failed to write file!";
+        throw runtime_error("Failed to save recieved file");
 
     }
 
@@ -127,7 +144,7 @@ string Client::recieveFile(string fileName)
     {
         if (!clientInfrastructure->readFromServer(buffer))
         {
-            return "Client>>Failed in recieving file";
+            throw SocketException("Failed to recieve file", "read");
 
         }
         output->writeLine("Client>>"+md5(buffer));
@@ -136,13 +153,13 @@ string Client::recieveFile(string fileName)
     }
     if (!clientInfrastructure->readFromServer(buffer))
     {
-        return "Client>>Failed in recieving file";
-
+        throw SocketException("Failed to recieve file", "read");
     }
 
     outStream.write(buffer.c_str(), remaindedBytes);
 
     outStream.close();
+
     return "Client>>finished recieving file";
 
 }

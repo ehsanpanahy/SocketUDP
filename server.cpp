@@ -4,6 +4,10 @@
 #include "messageprotocol.h"
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
+#include "socketexception.h"
+
+#include <thread>
 
 using namespace std;
 
@@ -17,8 +21,17 @@ Server::Server(const string address, int port,
 
 {
     serverInfrastructure = new ServerCpnet(address, port, sockType, protocol, bufferSize );
-    createUserFile();
     output = new SyncOutput(cout);
+
+    try {
+        createUserFile();
+
+    } catch (const runtime_error &e) {
+        output->write("Server>>");
+        output->writeLine(e.what());
+        output->writeLine("Restart the Server");
+    }
+
 
 }
 
@@ -29,12 +42,13 @@ Server::~Server()
 }
 
 
-bool Server::initiate()
+void Server::initiate()
 {
-    if (!serverInfrastructure->initServer()) return false;
+    if (!serverInfrastructure->initServer())
+        throw SocketException("Failed to initialize server", "initilization");
 
-    return serverInfrastructure->bindServer();
-
+    if (!serverInfrastructure->bindServer())
+        throw SocketException("Failed to bind server", "bind");
 }
 
 void Server::startServer()
@@ -63,8 +77,9 @@ MessageProtocol Server::readMessage()
    MessageProtocol messageProtocol;
    string readedMessage;
    int readResult = serverInfrastructure->readFromClient(readedMessage);
+
    if (!readResult)
-       return messageProtocol;
+       throw SocketException("Failed to read message", "Read");
 
    messageProtocol.deSerializeMessage(readedMessage);
    return messageProtocol;
@@ -91,7 +106,16 @@ bool Server::sendMessage(MessageProtocol message)
 
 void Server::getCommand()
 {
-    MessageProtocol recievedMessage= this->readMessage();
+    MessageProtocol recievedMessage;
+
+    try {
+        recievedMessage= this->readMessage();
+    } catch (SocketException e) {
+        output->writeLine("Action:"+e.getAction() + "failed"
+                          "with the message:"+ e.what());
+        return;
+    }
+
     output->write("Server>>Recieved Command: ");
     output->writeLine(recievedMessage.getCommand());
     commandProcessor(recievedMessage);
@@ -119,7 +143,14 @@ void Server::commandProcessor(MessageProtocol &newMessage)
         output->write("Server>>Requested fileName:" );
         output->writeLine(fileName);
         this->sendMessage("sendingFile");
-        sendFileToClient(fileName);
+        try {
+            sendFileToClient(fileName);
+
+        } catch (const SocketException &e) {
+            output->writeLine("Server>>Action:" + e.getAction() + "Failed"
+                                "with the message" +
+                                e.what());
+        }
 
     }
     else if (newCommand.find("quit") != string::npos)
@@ -147,13 +178,23 @@ void Server::login(string recUsername, string recPassword)
     User newUser;
     newUser.setUserName(recUsername);
     newUser.setHashedPassword(recPassword);
-    if (!checkLogin(newUser))
-    {
-        output->writeLine("Server>>Login failed!");
-        this->sendMessage("Login failed!");
 
-        return;
+    try {
+        if (!checkLogin(newUser))
+        {
+            output->writeLine("Server>>Login failed!");
+            this->sendMessage("Login failed!");
+            return;
+        }
+
+    } catch (const runtime_error &e) {
+        output->write("Server>>");
+        output->writeLine(e.what());
+        this->sendMessage("Server has encountered an internal error.");
+        return ;
+
     }
+
 
     this->isLogin = true;
     output->writeLine("Server>>Login successfully!");
@@ -175,6 +216,7 @@ void Server::logout()
 
 void Server::sendFileToClient(string &fileName)
 {
+    //std::this_thread::sleep_for(chrono::seconds(3));
     uint16_t bufferSize = serverInfrastructure->getBufferSize();
     char buffer[bufferSize];
 
@@ -192,9 +234,12 @@ void Server::sendFileToClient(string &fileName)
     int fileSize = inputStream.tellg();
     inputStream.seekg(0, inputStream.beg);
 
-    this->serverInfrastructure->writeToClient(to_string(fileSize),
+    if (!this->serverInfrastructure->writeToClient(to_string(fileSize),
                                                         serverInfrastructure->getClientAddress(),
-                                                        serverInfrastructure->getClientPort());
+                                                        serverInfrastructure->getClientPort()))
+    {
+        throw SocketException("Failed to send file to client", "SendFile.");
+    }
     output->writeLine("Server>>Start sending file...");
 
     int loopCount = fileSize / bufferSize;
@@ -208,8 +253,7 @@ void Server::sendFileToClient(string &fileName)
                                                  serverInfrastructure->getClientAddress(),
                                                  serverInfrastructure->getClientPort()))
         {
-            output->writeLine("Server>>failed to send message to client.");
-            break;
+            throw SocketException("Failed to send file to client", "SendFile.");
         }
     }
 
@@ -218,7 +262,7 @@ void Server::sendFileToClient(string &fileName)
                                              serverInfrastructure->getClientAddress(),
                                              serverInfrastructure->getClientPort()))
     {
-        output->writeLine("Server>>failed to send message to client.");
+        throw SocketException("Failed to send file to client", "SendFile.");
 
     }
 
@@ -231,9 +275,10 @@ bool Server::checkLogin(User &newUser)
 {
     ifstream userStream;
     userStream.open("users.json", ifstream::in);
+
     if (!userStream)
     {
-        return false;
+        throw runtime_error("Could not open users.json .");
     }
 
     User adminUser;
@@ -252,10 +297,10 @@ bool Server::checkLogin(User &newUser)
 void Server::createUserFile()
 {
     ofstream userStream("users.json");
+
     if (!userStream.good())
     {
-        output->writeLine("Server>>Error creating users.json" );
-        return;
+        throw runtime_error("Error creating users.json");
     }
 
     User adminUser("admin", "admin");

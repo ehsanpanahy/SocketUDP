@@ -26,7 +26,7 @@ public:
     void sendFileToClient(std::string &fileName);
     bool sendMessage(std::string message);
     bool sendMessage(MessageProtocol message);
-    bool initiate();
+    void initiate();
     void listen();
     bool accpet();
     MessageProtocol readMessage();

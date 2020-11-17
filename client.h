@@ -18,7 +18,7 @@ public:
            int SocketType, int protocol);
     ~Client();
 
-    bool initiate();
+    void initiate();
     bool sendMessage(std::string message);
     bool sendMessage(MessageProtocol message);
     MessageProtocol readMessage();

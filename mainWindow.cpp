@@ -1,4 +1,4 @@
-#include "mainwinow.h"
+#include "mainwidnow.h"
 #include "ui_form.h"
 #include "loginview.h"
 #include "getfilewindow.h"
