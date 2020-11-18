@@ -1,10 +1,8 @@
 #include "user.h"
 #include "md5.h"
-#include "user.h"
 
-#include <regex>
+
 #include <iostream>
-#include <algorithm>
 
 
 User::User()
@@ -42,16 +40,16 @@ void User::serializeUser(ostream &os)
     u.setUserName(this->userName);
     u.setHashedPassword(this->hashedPassword);
 
-    cereal::JSONOutputArchive outAr(os);
-    outAr(u);
+    cereal::JSONOutputArchive outArchive(os);
+    outArchive(u);
 
 }
 
 void User::deSerializedUser(istream &is)
 {
-    cereal::JSONInputArchive isAr(is);
+    cereal::JSONInputArchive inArchive(is);
     User u;
-    isAr(u);
+    inArchive(u);
     this->userName = u.getUserName();
     this->hashedPassword = u.getHashedPassword();
 

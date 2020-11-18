@@ -3,6 +3,13 @@
 
 #include <string>
 
+/**
+ * @brief An Interface(Abstract class) for Client Infrastructure.
+ * @details This interface decouples the implementation of client infrastrucure
+ *  from the underlying library(Unix, boost, win32,...). That way the user of the
+ *  client class does not need to be concerned about the platform which
+ *   app is running in.
+ */
 class ClientInterface
 {
 public:
@@ -19,12 +26,10 @@ public:
     std::string getServerAddress() const;
     void setServerAddress(const std::string &value);
 
-    uint16_t getServerPort() const;
-    void setServerPort(const uint16_t &value);
+    int getServerPort() const;
+    void setServerPort(const int &value);
 
 public:
-    enum SOCKET_TYPE {TCP, UDP};
-    enum PROTOCOL {IP};
 
     int getSocketType() const;
     void setSocketType(int value);
@@ -37,7 +42,7 @@ public:
 
 protected:
     std::string serverAddress;
-    uint16_t bufferSize;
+    int bufferSize;
     int serverPort;
     int SocketType;
     int Protocol;

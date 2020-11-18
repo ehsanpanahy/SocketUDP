@@ -11,7 +11,7 @@
 class QPushButton;
 
 namespace Ui {
-class Form;
+class MainWindow;
 }
 
 class MainWindow : public QDialog
@@ -36,7 +36,7 @@ private:
 
 
 private:
-    Ui::Form *ui;
+    Ui::MainWindow *ui;
     Client *client;
     LoginView *loginView;
     getfileWindow *getFileView;

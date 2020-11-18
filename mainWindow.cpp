@@ -8,7 +8,7 @@
 using namespace std;
 
 MainWindow::MainWindow(Client &client, QWidget *parent)
-    :QDialog(parent), ui(new Ui::Form)
+    :QDialog(parent), ui(new Ui::MainWindow)
 {
 
     ui->setupUi(this);

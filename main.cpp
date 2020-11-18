@@ -15,6 +15,14 @@ using namespace std;
 
 #define BUFFER_SIZE 1024
 
+/**
+ * @author Ehsan Panahi
+ * @details A simple Server-Client application which runs in parallel threads.
+ *  Client has two interfaces which can be used arbitary. One is a Command line
+ *  interface which works well with linux terminal. the other one is a simple
+ *  Qt Window interface.
+ *
+ */
 
 
 int main(int argc, char *argv[])
@@ -60,9 +68,10 @@ int main(int argc, char *argv[])
 
     delete client;
     delete server;
+    //delete cmd;
 
     return 0;
 
-    //delete cmd;
+
 
 }

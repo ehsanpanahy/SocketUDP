@@ -29,6 +29,9 @@ MessageProtocol::~MessageProtocol()
 std::string MessageProtocol::serializeMessage()
 {
     string serialMessage;
+
+    //  This loop will attach data message in a string and will combine them
+    //  with custom delimiter.
     for (string s : data )
     {
         serialMessage.append(delimiter);
@@ -43,15 +46,19 @@ std::string MessageProtocol::serializeMessage()
 
 void MessageProtocol::deSerializeMessage(string message)
 {
-    string messageSize =  message.substr(0, message.find(delimiter));
-    ssize_t ss = stoi(messageSize);
+    // Extract the message length by using the first delimeter position.
+    unsigned long messageSize = stoul(message.substr(0, message.find(delimiter))) ;
 
-    string recMessage = message.substr(message.find("-")+1, ss);
+    // Now it trims the incoming message to the extracted messageSize.
+    // this will remove the unwanted characters from the message.
+    string recMessage = message.substr(message.find("-")+1, messageSize);
     this->size = recMessage.length();
 
     data.clear();
 
-    int pos = 0;
+    //  Here it splits the body of the message to different parts and stores it
+    //  in data vector.
+    size_t pos = 0;
     while(pos != std::string::npos)
     {
         pos = recMessage.find(delimiter);
@@ -61,6 +68,8 @@ void MessageProtocol::deSerializeMessage(string message)
 
     }
 
+    //  First part of every method is the command name. this extracts it and then
+    //  removes it from data vector.
     command = data[0];
     data.erase(data.begin());
 }

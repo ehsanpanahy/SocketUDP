@@ -79,11 +79,21 @@ string CommandLineInterface::commandInterpreter(string &command)
 void CommandLineInterface::getPassword(string &password)
 {
     struct termios initialrsettings, newrsettings;
+
+    //  get the default settings of terminal
     tcgetattr(fileno(stdin), &initialrsettings);
+
+    //  save settings in a new variable so we can easily apply them to terminal.
     newrsettings = initialrsettings;
+
+    //  change setting to preferred options.
     newrsettings.c_lflag &= ~ECHO;
+
+    //  apply changes to terminal
     tcsetattr(fileno(stdin), TCSAFLUSH, &newrsettings);
     cin >>password;
+
+    //  Reset terminal setting to default.
     tcsetattr(fileno(stdin), TCSANOW, &initialrsettings);
 
 }

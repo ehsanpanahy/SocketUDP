@@ -35,6 +35,7 @@ HEADERS += client.h \
            clientinterface.h \
            commandlineinterface.h \
            commons.h \
+           console.h \
            getfilewindow.h \
            loginview.h \
            loginwidget.h \
@@ -45,8 +46,6 @@ HEADERS += client.h \
            servercpnet.h \
            serverinterface.h \
            socketexception.h \
-           syncinput.h \
-           syncoutput.h \
            user.h \
            libcpnet-dev/config.h \
            libcpnet-dev/src/cpnet-export.h \
@@ -55,12 +54,14 @@ HEADERS += client.h \
            libcpnet-dev/output/include/cpnet/cpnet-export.h \
            libcpnet-dev/output/include/cpnet/cpnet-network.h
 
-FORMS += form.ui getfilewindow.ui loginview.ui
+FORMS += getfilewindow.ui loginview.ui \
+    mainwindow.ui
 SOURCES += client.cpp \
            clientcpnet.cpp \
            clientinterface.cpp \
            commandlineinterface.cpp \
            commons.cpp \
+    console.cpp \
            getfilewindow.cpp \
            loginview.cpp \
            loginwidget.cpp \
@@ -72,8 +73,6 @@ SOURCES += client.cpp \
            servercpnet.cpp \
            serverinterface.cpp \
     socketexception.cpp \
-           syncinput.cpp \
-           syncoutput.cpp \
            user.cpp \
            libcpnet-dev/src/cpnet-network.c \
 

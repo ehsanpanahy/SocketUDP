@@ -21,15 +21,15 @@ Server::Server(const string address, int port,
 
 {
     serverInfrastructure = new ServerCpnet(address, port, sockType, protocol, bufferSize );
-    output = new SyncOutput(cout);
+    console = new Console(cout, cin);
 
     try {
         createUserFile();
 
     } catch (const runtime_error &e) {
-        output->write("Server>>");
-        output->writeLine(e.what());
-        output->writeLine("Restart the Server");
+        console->write("Server>>");
+        console->writeLine(e.what());
+        console->writeLine("Restart the Server");
     }
 
 
@@ -38,7 +38,7 @@ Server::Server(const string address, int port,
 Server::~Server()
 {
     delete serverInfrastructure;
-    delete output;
+    delete console;
 }
 
 
@@ -55,11 +55,11 @@ void Server::startServer()
 {
     while(1)
     {
-        output->writeLine("Server>>Waiting for client request:");
+        console->writeLine("Server>>Waiting for client request:");
         getCommand();
         if (isStop)
         {
-            output->writeLine("Server>>Shutting down...");
+            console->writeLine("Server>>Shutting down...");
             break;
         }
     }
@@ -111,18 +111,20 @@ void Server::getCommand()
     try {
         recievedMessage= this->readMessage();
     } catch (SocketException e) {
-        output->writeLine("Action:"+e.getAction() + "failed"
+        console->writeLine("Action:"+e.getAction() + "failed"
                           "with the message:"+ e.what());
         return;
     }
 
-    output->write("Server>>Recieved Command: ");
-    output->writeLine(recievedMessage.getCommand());
-    commandProcessor(recievedMessage);
+    console->write("Server>>Recieved Command: ");
+    console->writeLine(recievedMessage.getCommand());
+
+    commandInterpreter(recievedMessage);
 }
 
-void Server::commandProcessor(MessageProtocol &newMessage)
+void Server::commandInterpreter(MessageProtocol &newMessage)
 {
+    // Extract command and data from message.
     string newCommand = newMessage.getCommand();
     auto newData = newMessage.getData();
 
@@ -135,19 +137,20 @@ void Server::commandProcessor(MessageProtocol &newMessage)
     }else if(newCommand.find("getfile") != string::npos)
     {
         if (!this->isLogin) {
-            output->writeLine("Server>>First login and then request for the file.");
+            console->writeLine("Server>>First login and then request for the file.");
             this->sendMessage("First login and then request for the file.");
             return;
         }
+
         string fileName = newData[0];
-        output->write("Server>>Requested fileName:" );
-        output->writeLine(fileName);
+        console->write("Server>>Requested fileName:" );
+        console->writeLine(fileName);
         this->sendMessage("sendingFile");
         try {
             sendFileToClient(fileName);
 
         } catch (const SocketException &e) {
-            output->writeLine("Server>>Action:" + e.getAction() + "Failed"
+            console->writeLine("Server>>Action:" + e.getAction() + "Failed"
                                 "with the message" +
                                 e.what());
         }
@@ -170,7 +173,7 @@ void Server::login(string recUsername, string recPassword)
 
     if (this->isLogin)
     {
-        output->writeLine("Server>>You are already logged in!");
+        console->writeLine("Server>>You are already logged in!");
         this->sendMessage("You are already logged in!");
         return ;
     }
@@ -182,14 +185,14 @@ void Server::login(string recUsername, string recPassword)
     try {
         if (!checkLogin(newUser))
         {
-            output->writeLine("Server>>Login failed!");
+            console->writeLine("Server>>Login failed!");
             this->sendMessage("Login failed!");
             return;
         }
 
     } catch (const runtime_error &e) {
-        output->write("Server>>");
-        output->writeLine(e.what());
+        console->write("Server>>");
+        console->writeLine(e.what());
         this->sendMessage("Server has encountered an internal error.");
         return ;
 
@@ -197,39 +200,41 @@ void Server::login(string recUsername, string recPassword)
 
 
     this->isLogin = true;
-    output->writeLine("Server>>Login successfully!");
+    console->writeLine("Server>>Login successfully!");
     this->sendMessage("Login successfully!");
 }
 
 void Server::logout()
 {
     if (!isLogin){
-        output->writeLine("You are not logged in!");
+        console->writeLine("You are not logged in!");
         this->sendMessage("You are not logged in!");
         return;
     }
 
     this->isLogin = false;
-    output->writeLine("Server>>Logout successfully!");
+    console->writeLine("Server>>Logout successfully!");
     this->sendMessage("Lgout out successfully");
 }
 
 void Server::sendFileToClient(string &fileName)
 {
-    //std::this_thread::sleep_for(chrono::seconds(3));
+
     uint16_t bufferSize = serverInfrastructure->getBufferSize();
     char buffer[bufferSize];
 
     ifstream inputStream;
     inputStream.open(fileName, ifstream::in);
 
+    // Inform the client that the requested file does not exist.
     if (!inputStream)
     {
-        output->writeLine("Server>>Bad file request.");
+        console->writeLine("Server>>Bad file request.");
         this->sendMessage("fileNotFound");
         return;
     }
 
+    //  Calculate the file size and send it to the client.
     inputStream.seekg(0, inputStream.end);
     int fileSize = inputStream.tellg();
     inputStream.seekg(0, inputStream.beg);
@@ -240,15 +245,17 @@ void Server::sendFileToClient(string &fileName)
     {
         throw SocketException("Failed to send file to client", "SendFile.");
     }
-    output->writeLine("Server>>Start sending file...");
+    console->writeLine("Server>>Start sending file...");
 
+    // Calculate the loop count based on the file size and buffer size. first
+    // read and send chunks of bytes to the end of loop count.
     int loopCount = fileSize / bufferSize;
     int remaindedBytes = fileSize % bufferSize;
     for (int loop = 0; loop < loopCount; loop++)
     {
         inputStream.read(buffer, bufferSize);
 
-        output->writeLine("Server>>"+md5(buffer));
+        console->writeLine("Server>>"+md5(buffer));
         if (!serverInfrastructure->writeToClient(buffer,
                                                  serverInfrastructure->getClientAddress(),
                                                  serverInfrastructure->getClientPort()))
@@ -257,6 +264,7 @@ void Server::sendFileToClient(string &fileName)
         }
     }
 
+    // Then read the remainded bytes and send them.
     inputStream.read(buffer, remaindedBytes);
     if (!serverInfrastructure->writeToClient(buffer,
                                              serverInfrastructure->getClientAddress(),
@@ -323,7 +331,7 @@ bool Server::accpet()
 
 void Server::setOutStream(ostream &outStream)
 {
-    output->setStream(outStream);
+    console->setOutputStream(outStream);
 }
 
 

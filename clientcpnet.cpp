@@ -3,6 +3,7 @@
 #include <iostream>
 #include "commons.h"
 
+
 ClientCpnet::ClientCpnet(std::string Address, int Port, int bufferSize, int socketType, int Protocol)
 
 {
@@ -63,6 +64,10 @@ bool ClientCpnet::writeToServer(std::string word)
     uint16_t port = serverPort;
 
     ssize_t writeResult;
+
+    //  We try to send minimum number of bytes. thus if the message size is
+    // smaller than buffer size, we just copy and sends as equal as
+    // message length.
     if (word.length() < bufferSize)
     {
         strncpy(buffer, word.c_str(), word.length());

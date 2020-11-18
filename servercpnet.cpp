@@ -82,6 +82,10 @@ bool ServerCpnet::writeToClient(std::string word,
 
     char buffer[bufferSize];
     ssize_t n_bytes;
+
+    //  We try to send minimum number of bytes. thus if the message size is
+    // smaller than buffer size, we just copy and sends as equal as
+    // message length.
     if (word.length() < bufferSize)
     {
        strncpy(buffer, word.c_str(), word.length());
@@ -96,7 +100,6 @@ bool ServerCpnet::writeToClient(std::string word,
 
     if (n_bytes == -1)
         return false;
-
 
     return true;
 }

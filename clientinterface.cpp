@@ -20,12 +20,13 @@ void ClientInterface::setServerAddress(const std::string &value)
     serverAddress = value;
 }
 
-uint16_t ClientInterface::getServerPort() const
+
+int ClientInterface::getServerPort() const
 {
     return serverPort;
 }
 
-void ClientInterface::setServerPort(const uint16_t &value)
+void ClientInterface::setServerPort(const int &value)
 {
     serverPort = value;
 }

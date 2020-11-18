@@ -3,6 +3,13 @@
 
 #include <string>
 
+/**
+ * @brief An interface for Server infrastructure.
+ * @details This interface decouples the implementation of server infrastrucure
+ *  from the underlying library(Unix, boost, win32,...). That way the user of the
+ *  Server class does not need to be concerned about the platform which
+ *   app is running in.
+ */
 class ServerInterface
 {
 public:
@@ -14,8 +21,7 @@ public:
     virtual void listenToClients(int backLog) = 0;
     virtual bool acceptClient(std::string address, int port) = 0;
     virtual bool writeToClient(std::string word,
-                               std::string peerAddrees,
-                               int peerPort) = 0;
+                               std::string peerAddrees, int peerPort) = 0;
     virtual bool readFromClient(std::string &read) = 0;
     virtual bool closeServer() = 0;
 
@@ -31,10 +37,6 @@ public:
 
     int getProtocol() const;
     void setProtocol(int value);
-
-
-    enum SOCKET_TYPE {TCP, UDP};
-    enum PROTOCOL {IP};
 
     uint16_t getBufferSize() const;
     void setBufferSize(const uint16_t &value);

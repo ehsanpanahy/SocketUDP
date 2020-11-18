@@ -13,15 +13,14 @@ Client::Client(string serverAddress, int serverPort, int bufferSize, int SocketT
 {
     clientInfrastructure = new ClientCpnet(serverAddress, serverPort, bufferSize,
                              SocketType, protocol);
-    output = new SyncOutput(cout);
-    input = new SyncInput(cin);
+    console = new Console(cout, cin);
+
 }
 
 Client::~Client()
 {
     delete clientInfrastructure;
-    delete output;
-    delete input;
+    delete console;
 }
 
 void Client::initiate()
@@ -41,7 +40,7 @@ bool Client::sendMessage(string message)
 
 }
 
-bool Client::sendMessage(MessageProtocol message)
+bool Client::sendMessage(MessageProtocol &message)
 {
     return clientInfrastructure->
             writeToServer(message.serializeMessage());
@@ -54,8 +53,7 @@ MessageProtocol Client::readMessage()
     bool result =  clientInfrastructure->readFromServer(readedMessage);
     if (!result )
     {
-        messageProtocol.addData("Failed to read message");
-        return messageProtocol ;
+        throw SocketException("Failed to read message", "Read");
     }
 
     messageProtocol.deSerializeMessage(readedMessage);
@@ -67,50 +65,62 @@ string Client::sendCommand(string command, string data[])
 {
     string response;
 
-    if (command.find("login") != string::npos)
-    {
+    //  if-else block will check "command" against a set of
+    //  predefined commands. It provides the parameters and call the
+    //  appropriate helper function.
 
-        response =login(data);
-
-    }else if (command.find("getfile") != string::npos)
-    {
-        string fileName = data[0];
-        MessageProtocol getFileMessage(fileName);
-        getFileMessage.setCommand("getfile");
-        this->sendMessage(getFileMessage);
-        response = this->readMessage().getData()[0];
-        if (response.find("sendingFile") != string::npos)
+    // TO-DO : improve the block and replace it with map collection.
+    try {
+        if (command.find("login") != string::npos)
         {
-            try {
-                response = recieveFile(fileName);
-            } catch (const SocketException &e) {
-                output->writeLine("Action:" + e.getAction() +
-                                  "Failed with the message:" +
-                                  e.what());
-                return "Error reciveving file";
-
-            }catch(const runtime_error &e)
+            response =login(data);
+        }
+        else if (command.find("getfile") != string::npos)
+        {
+            string fileName = data[0];
+            MessageProtocol getFileMessage(fileName);
+            getFileMessage.setCommand("getfile");
+            this->sendMessage(getFileMessage);
+            response = this->readMessage().getData()[0];
+            if (response.find("sendingFile") != string::npos)
             {
-                output->writeLine(e.what());
-                return "Runtime error!";
+                try {
+                    response = recieveFile(fileName);
+                } catch (const SocketException &e) {
+                    console->writeLine("Action:" + e.getAction() +
+                                      "Failed with the message:" +
+                                      e.what());
+                    return "Error reciveving file";
+
+                }catch(const runtime_error &e)
+                {
+                    console->writeLine(e.what());
+                    return "Runtime error!";
+                }
             }
+
+        }else if (command.find("logout") != string::npos)
+        {
+
+            response = logout();
+        }
+        else if (command.find("quit") != string::npos)
+        {
+            MessageProtocol quitMessage("Client is shutting down.");
+            quitMessage.setCommand("quit");
+            this->sendMessage(quitMessage);
+        } else {
+            console->writeLine("Bad Input command!");
         }
 
-    }else if (command.find("logout") != string::npos)
-    {
 
-        response = logout();
-    }
-    else if (command.find("quit") != string::npos)
-    {
-        MessageProtocol quitMessage("Client is shutting down.");
-        quitMessage.setCommand("quit");
-        this->sendMessage(quitMessage);
-    } else {
-        output->writeLine("Bad Input command!");
+    } catch (const SocketException &e) {
+        console->writeLine("Action:" + e.getAction() +
+                          "Failed with the message:" +
+                          e.what());
     }
 
-    output->write("Clinet>>"+response);
+    console->write("Clinet>>"+response);
     return response;
 }
 
@@ -127,8 +137,9 @@ string Client::recieveFile(string fileName)
         return "Client>>Bad file request";
     }
 
-    output->writeLine("Client>>Start recieving file...");
+    console->writeLine("Client>>Start recieving file...");
 
+    //  Get the file size so that can calculate loop count and remained bytes.
     int fileSize = stoi(buffer);
     ofstream outStream("rec" + fileName);
 
@@ -147,10 +158,11 @@ string Client::recieveFile(string fileName)
             throw SocketException("Failed to recieve file", "read");
 
         }
-        output->writeLine("Client>>"+md5(buffer));
+        console->writeLine("Client>>"+md5(buffer));
         outStream.write(buffer.c_str(), bufferSize);
 
     }
+
     if (!clientInfrastructure->readFromServer(buffer))
     {
         throw SocketException("Failed to recieve file", "read");
@@ -160,7 +172,7 @@ string Client::recieveFile(string fileName)
 
     outStream.close();
 
-    return "Client>>finished recieving file";
+    return "finished recieving file";
 
 }
 
@@ -172,11 +184,17 @@ bool Client::connect()
 
 string Client::login(string userInfo[])
 {
-
     MessageProtocol user(2, userInfo);
     user.setCommand("login");
     this->sendMessage(user);
-    return (this->readMessage().getData()[0]);
+
+    try {
+        return (this->readMessage().getData()[0]);
+    } catch (SocketException &e) {
+        e.setAction("login");
+        throw;
+    }
+
 }
 
 string Client::logout()
@@ -186,18 +204,25 @@ string Client::logout()
     logoutMessage.setCommand("logout");
     this->sendMessage(logoutMessage);
 
-    return this->readMessage().getData()[0];
+    try {
+        return this->readMessage().getData()[0];
+
+    } catch (SocketException &e) {
+        e.setAction("logout");
+        throw;
+    }
+
 }
 
 
 void Client::setOutStream(ostream &outStream)
 {
-    this->output->setStream(outStream);
+    this->console->setOutputStream(outStream);
 }
 
 void Client::setInStream(istream &inStream)
 {
-    this->input->setStream(inStream);
+    this->console->setInputStream(inStream);
 }
 
 void Client::close()
