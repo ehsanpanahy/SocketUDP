@@ -1,16 +1,12 @@
-#include "mainwidnow.h"
-#include "ui_form.h"
-#include "loginview.h"
-#include "getfilewindow.h"
-#include "string"
-#include <iostream>
+#include "maindialog.h"
+#include "ui_maindialog.h"
 
 using namespace std;
 
-MainWindow::MainWindow(Client &client, QWidget *parent)
-    :QDialog(parent), ui(new Ui::MainWindow)
+MainDialog::MainDialog(Client &client, QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::MainDialog)
 {
-
     ui->setupUi(this);
 
     connect(ui->loginButton, SIGNAL(clicked()),  this,
@@ -31,32 +27,29 @@ MainWindow::MainWindow(Client &client, QWidget *parent)
     client.setOutStream(*logStream);
 }
 
-MainWindow::~MainWindow()
+MainDialog::~MainDialog()
 {
     delete ui;
     delete loginView;
     delete getFileView;
     delete logStream;
-
-
 }
 
-void MainWindow::loginSlot()
+void MainDialog::loginSlot()
 {
     loginView->show();
     loginView->exec();
     writeLog();
-
 }
 
-void MainWindow::quitSlot()
+void MainDialog::quitSlot()
 {
     client->sendCommand("quit");
     this->close();
 
 }
 
-void MainWindow::getFileSlot()
+void MainDialog::getFileSlot()
 {
     getFileView->show();
     getFileView->exec();
@@ -64,14 +57,16 @@ void MainWindow::getFileSlot()
 
 }
 
-void MainWindow::logoutSlot()
+void MainDialog::logoutSlot()
 {
     string response = client->sendCommand("logout");
     writeLog();
+
 }
 
-void MainWindow::writeLog()
+void MainDialog::writeLog()
 {
     ui->status_Text->append(logStream->str().c_str());
     logStream->str("");
+
 }

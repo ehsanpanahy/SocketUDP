@@ -38,8 +38,7 @@ HEADERS += client.h \
            console.h \
            getfilewindow.h \
            loginview.h \
-           loginwidget.h \
-           mainwidnow.h \
+           maindialog.h \
            md5.h \
            messageprotocol.h \
            server.h \
@@ -55,7 +54,7 @@ HEADERS += client.h \
            libcpnet-dev/output/include/cpnet/cpnet-network.h
 
 FORMS += getfilewindow.ui loginview.ui \
-    mainwindow.ui
+    maindialog.ui
 SOURCES += client.cpp \
            clientcpnet.cpp \
            clientinterface.cpp \
@@ -64,9 +63,8 @@ SOURCES += client.cpp \
     console.cpp \
            getfilewindow.cpp \
            loginview.cpp \
-           loginwidget.cpp \
            main.cpp \
-           mainWindow.cpp \
+    maindialog.cpp \
            md5.cpp \
            messageprotocol.cpp \
            server.cpp \

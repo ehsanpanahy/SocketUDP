@@ -9,7 +9,7 @@
 #include "commandlineinterface.h"
 
 #include <QApplication>
-#include "mainwidnow.h"
+#include "maindialog.h"
 
 using namespace std;
 
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 
 
     QApplication app(argc, argv);
-    MainWindow *mainDialog = new MainWindow(*client);
+    MainDialog *mainDialog = new MainDialog(*client);
     mainDialog->show();
     mainDialog->exec();
 

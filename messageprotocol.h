@@ -7,8 +7,8 @@
  * @brief The MessageProtocol class defines a simple Messaging protocol for
  *  UDP socket.
  * @details Since UDP sockets does not support an inherent mechanism for
- * exchanging messages over the network, we defined this simple message protocol
- * to
+ *  exchanging messages over the network, we defined this simple message protocol
+ *  to:
  *      1)send the predefined command name.
  *      2)remove unwanted characters from message.
  *  It adds the length of the message to the beginning of the text, and attach
