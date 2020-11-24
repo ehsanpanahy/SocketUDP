@@ -40,6 +40,9 @@ int main(int argc, char *argv[])
     } catch (const SocketException &e) {
         cout <<"action:" + e.getAction() + "Failed with the message:"
             <<e.what();
+
+        delete server;
+        delete client;
         exit(EXIT_FAILURE);
     }
 

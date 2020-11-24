@@ -93,7 +93,7 @@ void CommandLineInterface::getPassword(string &password)
     tcsetattr(fileno(stdin), TCSAFLUSH, &newrsettings);
     cin >>password;
 
-    //  Reset terminal setting to default.
+    //  Reset terminal settings to default.
     tcsetattr(fileno(stdin), TCSANOW, &initialrsettings);
 
 }
